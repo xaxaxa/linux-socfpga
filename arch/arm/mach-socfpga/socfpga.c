@@ -133,6 +133,12 @@ static void __init socfpga_scu_map_io(void)
 	iotable_init(&scu_io_desc, 1);
 }
 
+static void __init enable_periphs(void)
+{
+	/* Release all peripherals from reset.*/
+	__raw_writel(0, rst_manager_base_addr + SOCFPGA_RSTMGR_MODPERRST);
+}
+
 static void __init socfpga_map_io(void)
 {
 	socfpga_scu_map_io();
