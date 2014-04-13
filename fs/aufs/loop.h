@@ -41,7 +41,7 @@ void au_loopback_fin(void);
 
 struct file *aufs_real_loop(struct file *file);
 #else
-AuStub(struct file *, loop_backing_file, return NULL)
+AuStub(struct file *, loop_backing_file, return NULL,void)
 
 AuStubInt0(au_test_loopback_overlap, struct super_block *sb,
 	   struct dentry *h_adding)

@@ -23,7 +23,7 @@
 #include <linux/mm.h>
 #include "aufs.h"
 
-void au_cpup_attr_flags(struct inode *dst, unsigned int iflags)
+void au_cpup_attr_flags(struct inode *dst, unsigned short iflags)
 {
 	const unsigned int mask = S_DEAD | S_SWAPFILE | S_PRIVATE
 		| S_NOATIME | S_NOCMTIME | S_AUTOMOUNT;

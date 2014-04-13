@@ -30,7 +30,7 @@ struct inode;
 struct file;
 struct au_pin;
 
-void au_cpup_attr_flags(struct inode *dst, unsigned int iflags);
+void au_cpup_attr_flags(struct inode *dst, unsigned short iflags);
 void au_cpup_attr_timesizes(struct inode *inode);
 void au_cpup_attr_nlink(struct inode *inode, int force);
 void au_cpup_attr_changeable(struct inode *inode);

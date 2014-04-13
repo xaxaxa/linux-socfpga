@@ -25,6 +25,7 @@
 #ifdef __KERNEL__
 
 #define AuStub(type, name, body, ...) \
+	static type name(__VA_ARGS__); \
 	static inline type name(__VA_ARGS__) { body; }
 
 #define AuStubVoid(name, ...) \
