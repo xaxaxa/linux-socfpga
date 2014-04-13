@@ -1640,6 +1640,10 @@ struct super_operations {
 	int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
 	long (*nr_cached_objects)(struct super_block *, int);
 	long (*free_cached_objects)(struct super_block *, long, int);
+#if defined(CONFIG_BLK_DEV_LOOP) ||  defined(CONFIG_BLK_DEV_LOOP_MODULE)
+	/* and aufs */
+	struct file *(*real_loop)(struct file *);
+#endif
 };
 
 /*
@@ -2701,6 +2705,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
 extern int inode_newsize_ok(const struct inode *, loff_t offset);
 extern void setattr_copy(struct inode *inode, const struct iattr *attr);
 
+extern int update_time(struct inode *, struct timespec *, int);
 extern int file_update_time(struct file *file);
 
 extern int generic_show_options(struct seq_file *m, struct dentry *root);
