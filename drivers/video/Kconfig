@@ -73,6 +73,8 @@ menuconfig FB
 	  (e.g. an accelerated X server) and that are not frame buffer
 	  device-aware may cause unexpected results. If unsure, say N.
 
+source "drivers/video/xaxaxafb/Kconfig"
+
 config FIRMWARE_EDID
        bool "Enable firmware EDID"
        depends on FB
