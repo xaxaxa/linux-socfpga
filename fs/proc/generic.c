@@ -23,6 +23,7 @@
 #include <linux/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/completion.h>
+#include <linux/vserver/inode.h>
 #include <asm/uaccess.h>
 
 #include "internal.h"
@@ -187,6 +188,8 @@ struct dentry *proc_lookup_de(struct proc_dir_entry *de, struct inode *dir,
 	for (de = de->subdir; de ; de = de->next) {
 		if (de->namelen != dentry->d_name.len)
 			continue;
+		if (!vx_hide_check(0, de->vx_flags))
+			continue;
 		if (!memcmp(dentry->d_name.name, de->name, de->namelen)) {
 			pde_get(de);
 			spin_unlock(&proc_subdir_lock);
@@ -195,6 +198,8 @@ struct dentry *proc_lookup_de(struct proc_dir_entry *de, struct inode *dir,
 				return ERR_PTR(-ENOMEM);
 			d_set_d_op(dentry, &simple_dentry_operations);
 			d_add(dentry, inode);
+			/* generic proc entries belong to the host */
+			i_tag_write(inode, 0);
 			return NULL;
 		}
 	}
@@ -242,6 +247,9 @@ int proc_readdir_de(struct proc_dir_entry *de, struct file *file,
 	do {
 		struct proc_dir_entry *next;
 		pde_get(de);
+
+		if (!vx_hide_check(0, de->vx_flags))
+			goto skip;
 		spin_unlock(&proc_subdir_lock);
 		if (!dir_emit(ctx, de->name, de->namelen,
 			    de->low_ino, de->mode >> 12)) {
@@ -249,6 +257,7 @@ int proc_readdir_de(struct proc_dir_entry *de, struct file *file,
 			return 0;
 		}
 		spin_lock(&proc_subdir_lock);
+	skip:
 		ctx->pos++;
 		next = de->next;
 		pde_put(de);
@@ -355,6 +364,7 @@ static struct proc_dir_entry *__proc_create(struct proc_dir_entry **parent,
 	ent->namelen = len;
 	ent->mode = mode;
 	ent->nlink = nlink;
+	ent->vx_flags = IATTR_PROC_DEFAULT;
 	atomic_set(&ent->count, 1);
 	spin_lock_init(&ent->pde_unload_lock);
 	INIT_LIST_HEAD(&ent->pde_openers);
@@ -378,7 +388,8 @@ struct proc_dir_entry *proc_symlink(const char *name,
 				kfree(ent->data);
 				kfree(ent);
 				ent = NULL;
-			}
+			} else
+				ent->vx_flags = IATTR_PROC_SYMLINK;
 		} else {
 			kfree(ent);
 			ent = NULL;

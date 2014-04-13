@@ -109,7 +109,8 @@ int jfs_setattr(struct dentry *dentry, struct iattr *iattr)
 	if (is_quota_modification(inode, iattr))
 		dquot_initialize(inode);
 	if ((iattr->ia_valid & ATTR_UID && !uid_eq(iattr->ia_uid, inode->i_uid)) ||
-	    (iattr->ia_valid & ATTR_GID && !gid_eq(iattr->ia_gid, inode->i_gid))) {
+	    (iattr->ia_valid & ATTR_GID && !gid_eq(iattr->ia_gid, inode->i_gid)) ||
+	    (iattr->ia_valid & ATTR_TAG && !tag_eq(iattr->ia_tag, inode->i_tag))) {
 		rc = dquot_transfer(inode, iattr);
 		if (rc)
 			return rc;
@@ -144,6 +145,7 @@ const struct inode_operations jfs_file_inode_operations = {
 #ifdef CONFIG_JFS_POSIX_ACL
 	.get_acl	= jfs_get_acl,
 #endif
+	.sync_flags	= jfs_sync_flags,
 };
 
 const struct file_operations jfs_file_operations = {

@@ -48,7 +48,7 @@ static int sysfs_fill_super(struct super_block *sb, void *data, int silent)
 
 	sb->s_blocksize = PAGE_CACHE_SIZE;
 	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
-	sb->s_magic = SYSFS_MAGIC;
+	sb->s_magic = SYSFS_SUPER_MAGIC;
 	sb->s_op = &sysfs_ops;
 	sb->s_time_gran = 1;
 

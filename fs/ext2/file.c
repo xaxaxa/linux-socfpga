@@ -104,4 +104,5 @@ const struct inode_operations ext2_file_inode_operations = {
 	.setattr	= ext2_setattr,
 	.get_acl	= ext2_get_acl,
 	.fiemap		= ext2_fiemap,
+	.sync_flags	= ext2_sync_flags,
 };

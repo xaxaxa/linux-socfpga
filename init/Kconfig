@@ -855,6 +855,7 @@ config NUMA_BALANCING
 menuconfig CGROUPS
 	boolean "Control Group support"
 	depends on EVENTFD
+	default y
 	help
 	  This option adds support for grouping sets of processes together, for
 	  use with process control subsystems such as Cpusets, CFS, memory
@@ -1117,6 +1118,7 @@ config IPC_NS
 config USER_NS
 	bool "User namespace"
 	select UIDGID_STRICT_TYPE_CHECKS
+	depends on VSERVER_DISABLED
 
 	default n
 	help

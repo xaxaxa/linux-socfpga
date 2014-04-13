@@ -22,6 +22,7 @@
 #include <linux/ctype.h>
 #include <linux/projid.h>
 #include <linux/fs_struct.h>
+#include <linux/vserver/global.h>
 
 static struct kmem_cache *user_ns_cachep __read_mostly;
 
@@ -94,6 +95,7 @@ int create_user_ns(struct cred *new)
 
 	atomic_set(&ns->count, 1);
 	/* Leave the new->user_ns reference with the new user namespace. */
+	atomic_inc(&vs_global_user_ns);
 	ns->parent = parent_ns;
 	ns->level = parent_ns->level + 1;
 	ns->owner = owner;
@@ -848,6 +850,8 @@ static void *userns_get(struct task_struct *task)
 
 static void userns_put(void *ns)
 {
+	/* FIXME: maybe move into destroyer? */
+	atomic_dec(&vs_global_user_ns);
 	put_user_ns(ns);
 }
 

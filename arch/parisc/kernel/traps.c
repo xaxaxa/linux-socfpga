@@ -229,8 +229,9 @@ void die_if_kernel(char *str, struct pt_regs *regs, long err)
 		if (err == 0)
 			return; /* STFU */
 
-		printk(KERN_CRIT "%s (pid %d): %s (code %ld) at " RFMT "\n",
-			current->comm, task_pid_nr(current), str, err, regs->iaoq[0]);
+		printk(KERN_CRIT "%s (pid %d:#%u): %s (code %ld) at " RFMT "\n",
+			current->comm, task_pid_nr(current), current->xid,
+			str, err, regs->iaoq[0]);
 #ifdef PRINT_USER_FAULTS
 		/* XXX for debugging only */
 		show_regs(regs);
@@ -263,8 +264,8 @@ void die_if_kernel(char *str, struct pt_regs *regs, long err)
 		pdc_console_restart();
 	
 	if (err)
-		printk(KERN_CRIT "%s (pid %d): %s (code %ld)\n",
-			current->comm, task_pid_nr(current), str, err);
+		printk(KERN_CRIT "%s (pid %d:#%u): %s (code %ld)\n",
+			current->comm, task_pid_nr(current), current->xid, str, err);
 
 	/* Wot's wrong wif bein' racy? */
 	if (current->thread.flags & PARISC_KERNEL_DEATH) {

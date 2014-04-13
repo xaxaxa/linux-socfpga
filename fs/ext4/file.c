@@ -618,5 +618,6 @@ const struct inode_operations ext4_file_inode_operations = {
 	.removexattr	= generic_removexattr,
 	.get_acl	= ext4_get_acl,
 	.fiemap		= ext4_fiemap,
+	.sync_flags	= ext4_sync_flags,
 };
 
