@@ -1169,7 +1169,8 @@ static void dw_mci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 		set_bit(DW_MMC_CARD_NEED_INIT, &slot->flags);
 		regs = mci_readl(slot->host, PWREN);
 		regs |= (1 << slot->id);
-		mci_writel(slot->host, PWREN, regs);
+		/* TEMP HACK for A10. Don't turn on the PWREN. */
+		/* mci_writel(slot->host, PWREN, regs);*/
 		break;
 	case MMC_POWER_ON:
 		if (!slot->host->vqmmc_enabled) {
