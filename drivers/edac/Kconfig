@@ -417,4 +417,11 @@ config EDAC_ALTERA_OCRAM_ECC
 	  Support for error detection and correction on the
 	  Altera On-Chip RAM Memory.
 
+config EDAC_ALTERA_NAND_ECC
+	bool "Altera NAND Flash Controller FIFOs EDAC"
+	depends on EDAC_ALTERA_ECC_MGR
+	help
+	  Support for error detection and correction on the
+	  Altera NAND Flash Controller FIFO memories.
+
 endif # EDAC
