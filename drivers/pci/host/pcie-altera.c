@@ -69,7 +69,8 @@ struct altera_pcie {
 	u8			root_bus_nr;
 	struct irq_domain	*irq_domain;
 	struct resource		bus_range;
-	struct list_head	resources;
+	struct list_head		resources;
+	struct msi_controller	*msi;
 };
 
 struct tlp_rp_regpair_t {
@@ -77,6 +78,15 @@ struct tlp_rp_regpair_t {
 	u32 reg0;
 	u32 reg1;
 };
+
+#ifdef CONFIG_PCI_MSI
+struct irq_domain *arch_get_pci_msi_domain(struct pci_dev *dev)
+{
+	struct altera_pcie *pcie = dev->bus->sysdata;
+
+	return pcie->msi->domain;
+}
+#endif /* CONFIG_PCI_MSI */
 
 static void altera_pcie_retrain(struct pci_dev *dev)
 {
@@ -166,7 +176,7 @@ static bool altera_pcie_valid_config(struct altera_pcie *pcie,
 
 static int tlp_read_packet(struct altera_pcie *pcie, u32 *value)
 {
-	u8 loop;
+	int i;
 	bool sop = 0;
 	u32 ctrl;
 	u32 reg0, reg1;
@@ -175,7 +185,7 @@ static int tlp_read_packet(struct altera_pcie *pcie, u32 *value)
 	 * Minimum 2 loops to read TLP headers and 1 loop to read data
 	 * payload.
 	 */
-	for (loop = 0; loop < TLP_LOOP; loop++) {
+	for (i = 0; i < TLP_LOOP; i++) {
 		ctrl = cra_readl(pcie, RP_RXCPL_STATUS);
 		if ((ctrl & RP_RXCPL_SOP) || (ctrl & RP_RXCPL_EOP) || sop) {
 			reg0 = cra_readl(pcie, RP_RXCPL_REG0);
@@ -376,7 +386,7 @@ static const struct irq_domain_ops intx_domain_ops = {
 	.map = altera_pcie_intx_map,
 };
 
-static void altera_pcie_isr(struct irq_desc *desc)
+static void altera_pcie_isr(unsigned int irq, struct irq_desc *desc)
 {
 	struct irq_chip *chip = irq_desc_get_chip(desc);
 	struct altera_pcie *pcie;
@@ -492,7 +502,26 @@ static int altera_pcie_parse_dt(struct altera_pcie *pcie)
 		return -EINVAL;
 	}
 
-	irq_set_chained_handler_and_data(pcie->irq, altera_pcie_isr, pcie);
+	irq_set_handler_data(pcie->irq, pcie);
+	irq_set_chained_handler(pcie->irq, altera_pcie_isr);
+
+	return 0;
+}
+
+static int altera_pcie_msi_enable(struct altera_pcie *pcie)
+{
+	struct device_node *msi_node;
+
+	msi_node = of_parse_phandle(pcie->pdev->dev.of_node,
+				    "msi-parent", 0);
+
+	if (!msi_node)
+		return -ENODEV;
+
+	pcie->msi = of_pci_find_msi_chip_by_node(msi_node);
+
+	if (!pcie->msi)
+		return -ENODEV;
 
 	return 0;
 }
@@ -539,6 +568,10 @@ static int altera_pcie_probe(struct platform_device *pdev)
 				pcie, &pcie->resources);
 	if (!bus)
 		return -ENOMEM;
+
+	 if (IS_ENABLED(CONFIG_PCI_MSI))
+		if (altera_pcie_msi_enable(pcie))
+			dev_info(&pdev->dev, "failed to enable MSI\n");
 
 	pci_fixup_irqs(pci_common_swizzle, of_irq_parse_and_map_pci);
 	pci_assign_unassigned_bus_resources(bus);

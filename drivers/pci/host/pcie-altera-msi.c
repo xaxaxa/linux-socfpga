@@ -35,13 +35,13 @@ struct altera_msi {
 	DECLARE_BITMAP(used, MAX_MSI_VECTORS);
 	struct mutex		lock;	/* protect "used" bitmap */
 	struct platform_device	*pdev;
-	struct irq_domain	*msi_domain;
-	struct irq_domain	*inner_domain;
+	struct irq_domain		*inner_domain;
 	void __iomem		*csr_base;
 	void __iomem		*vector_base;
 	phys_addr_t		vector_phy;
 	u32			num_of_vectors;
 	int			irq;
+	struct msi_controller	mchip;
 };
 
 static inline void msi_writel(struct altera_msi *msi, const u32 value,
@@ -55,7 +55,7 @@ static inline u32 msi_readl(struct altera_msi *msi, const u32 reg)
 	return readl_relaxed(msi->csr_base + reg);
 }
 
-static void altera_msi_isr(struct irq_desc *desc)
+static void altera_msi_isr(unsigned int irq, struct irq_desc *desc)
 {
 	struct irq_chip *chip = irq_desc_get_chip(desc);
 	struct altera_msi *msi;
@@ -181,6 +181,8 @@ static const struct irq_domain_ops msi_domain_ops = {
 
 static int altera_allocate_domains(struct altera_msi *msi)
 {
+	int ret;
+
 	msi->inner_domain = irq_domain_add_linear(NULL, msi->num_of_vectors,
 					     &msi_domain_ops, msi);
 	if (!msi->inner_domain) {
@@ -188,12 +190,19 @@ static int altera_allocate_domains(struct altera_msi *msi)
 		return -ENOMEM;
 	}
 
-	msi->msi_domain = pci_msi_create_irq_domain(msi->pdev->dev.of_node,
+	msi->mchip.domain = pci_msi_create_irq_domain(msi->pdev->dev.of_node,
 				&altera_msi_domain_info, msi->inner_domain);
-	if (!msi->msi_domain) {
+	if (!msi->mchip.domain) {
 		dev_err(&msi->pdev->dev, "failed to create MSI domain\n");
 		irq_domain_remove(msi->inner_domain);
 		return -ENOMEM;
+	}
+
+	msi->mchip.of_node = msi->pdev->dev.of_node;
+	ret = of_pci_msi_chip_add(&msi->mchip);
+	if (ret) {
+		dev_err(&msi->pdev->dev, "failed to add MSI controller chip\n");
+		return ret;
 	}
 
 	return 0;
@@ -201,7 +210,7 @@ static int altera_allocate_domains(struct altera_msi *msi)
 
 static void altera_free_domains(struct altera_msi *msi)
 {
-	irq_domain_remove(msi->msi_domain);
+	irq_domain_remove(msi->mchip.domain);
 	irq_domain_remove(msi->inner_domain);
 }
 
@@ -277,7 +286,9 @@ static int altera_msi_probe(struct platform_device *pdev)
 		goto err;
 	}
 
-	irq_set_chained_handler_and_data(msi->irq, altera_msi_isr, msi);
+	irq_set_handler_data(msi->irq, msi);
+	irq_set_chained_handler(msi->irq, altera_msi_isr);
+
 	platform_set_drvdata(pdev, msi);
 
 	return 0;
