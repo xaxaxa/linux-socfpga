@@ -206,8 +206,8 @@ static int uio_pdrv_genirq_probe(struct platform_device *pdev)
 	pm_runtime_enable(&pdev->dev);
 
 	ret = uio_register_device(&pdev->dev, priv->uioinfo);
-	if (ret) {
-		dev_err(&pdev->dev, "unable to register uio device\n");
+	if (ret<0) {
+		dev_err(&pdev->dev, "unable to register uio device: %d\n",ret);
 		pm_runtime_disable(&pdev->dev);
 		return ret;
 	}
