@@ -816,8 +816,10 @@ int __uio_register_device(struct module *owner,
 	atomic_set(&idev->event, 0);
 
 	ret = uio_get_minor(idev);
-	if (ret)
+	if (ret<0) {
+		printk(KERN_ERR "__uio_register_device: uio_get_minor failed: %d\n",ret);
 		return ret;
+	}
 
 	idev->dev = device_create(&uio_class, parent,
 				  MKDEV(uio_major, idev->minor), idev,
