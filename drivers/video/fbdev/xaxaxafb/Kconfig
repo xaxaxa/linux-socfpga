@@ -1,0 +1,10 @@
+config FB_XAXAXA
+	tristate "xaxaxafb support"
+	depends on (FB = y)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  xaxaxafb simple framebuffer device support
+
+
