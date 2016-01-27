@@ -6,6 +6,13 @@ menu "Character devices"
 
 source "drivers/tty/Kconfig"
 
+config XAXAXA_DMA
+	tristate "/dev/xaxaxadma device to allow userspace to allocate dma buffers"
+	default m
+	help
+	  allows userspace to call dma_alloc_coherent through an ioctl;
+	  dma_free_coherent is automatically called when the fd is closed.
+
 config DEVMEM
 	bool "/dev/mem virtual device support"
 	default y
