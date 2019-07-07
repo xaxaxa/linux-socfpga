@@ -29,6 +29,11 @@
 #include <linux/dma-contiguous.h>
 #include <linux/dma-mapping.h>
 
+
+//module parameters
+int default_width=1024,default_height=768;
+
+
 static struct fb_fix_screeninfo xaxaxafb_fix = {
 	.id		= "xaxaxa",
 	.type		= FB_TYPE_PACKED_PIXELS,
@@ -206,8 +211,8 @@ static int xaxaxafb_probe(struct platform_device *pdev) {
 	struct xaxaxafb_params params;
 	struct fb_info *info;
 	
-	params.width=1280;
-	params.height=1024;
+	params.width=default_width;
+	params.height=default_height;
 	int fbsize=params.width*params.height*4;
 	params.format=&xaxaxafb_formats[0];
 	params.stride=4*params.width;
@@ -310,6 +315,13 @@ static void __exit xaxaxafb_exit(void)
 }
 
 module_exit(xaxaxafb_exit);
+
+
+module_param(default_width, int, 0444);
+MODULE_PARM_DESC(default_width, "default width of the framebuffer in pixels");
+
+module_param(default_height, int, 0444);
+MODULE_PARM_DESC(default_height, "default height of the framebuffer in pixels");
 
 MODULE_AUTHOR("Stephen Warren <swarren@wwwdotorg.org>");
 MODULE_DESCRIPTION("Simple framebuffer driver");
